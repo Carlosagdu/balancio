@@ -87,27 +87,29 @@ const recentActivity = [
 
 export default function DashboardPage() {
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10">
-      <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
+      <section className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-wide text-slate-500">Dashboard</p>
+          <p className="text-sm uppercase tracking-wide text-slate-500">Balancio</p>
           <h1 className="text-3xl font-semibold text-slate-900">Shared expenses</h1>
           <p className="text-sm text-slate-500">
             Keep every split tidy and transparent. Light visuals only, no gradients.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">Settle up</Button>
-          <Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button variant="outline" className="w-full sm:w-auto">
+            Settle up
+          </Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" /> Add expense
           </Button>
         </div>
       </section>
 
-      <section className="card-grid">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
         {summaryCards.map((card) => (
           <Card key={card.title}>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
               <div>
                 <CardTitle>{card.title}</CardTitle>
                 <CardDescription>{card.description}</CardDescription>
@@ -129,32 +131,37 @@ export default function DashboardPage() {
 
       <section className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader className="flex items-start justify-between">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <CardTitle>Active splits</CardTitle>
               <CardDescription>Minimal overview across your current groups.</CardDescription>
             </div>
-            <Badge className="border-none bg-slate-100 text-slate-600">3 groups</Badge>
+            <Badge className="w-max border-none bg-slate-100 text-slate-600">3 groups</Badge>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-5">
             {activeSplits.map((split) => (
-              <div key={split.id} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+              <div
+                key={split.id}
+                className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="font-medium text-slate-900">{split.name}</p>
                     <p className="text-sm text-slate-500">{split.members.join(" • ")}</p>
                   </div>
-                  <Badge className="bg-white text-slate-600">{split.due}</Badge>
+                  <Badge className="bg-slate-100 text-slate-600">{split.due}</Badge>
                 </div>
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 space-y-3">
                   <Progress value={split.progress} />
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">Completion</span>
-                    <span className="font-medium text-slate-900">{split.progress}%</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-500">You owe</span>
-                    <span className="font-medium text-slate-900">{split.youOwe}</span>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-slate-500">Completion</p>
+                      <p className="font-semibold text-slate-900">{split.progress}%</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">You owe</p>
+                      <p className="font-semibold text-slate-900">{split.youOwe}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -164,20 +171,20 @@ export default function DashboardPage() {
 
         <div className="space-y-6">
           <Card>
-            <CardHeader className="flex items-center justify-between">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle>Recent activity</CardTitle>
                 <CardDescription>Simple list of what changed.</CardDescription>
               </div>
-              <Button variant="ghost" className="text-slate-500">
+              <Button variant="ghost" className="w-full justify-between text-slate-500 sm:w-auto">
                 View all
                 <ArrowUpRight className="ml-1 h-4 w-4" />
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between">
-                  <div>
+                <div key={activity.id} className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
                     <p className="text-sm font-medium text-slate-900">{activity.title}</p>
                     <p className="text-xs text-slate-500">{activity.detail}</p>
                   </div>
@@ -195,7 +202,7 @@ export default function DashboardPage() {
           </Card>
 
           <Card>
-            <CardHeader className="flex items-center justify-between">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle>Ready to settle</CardTitle>
                 <CardDescription>Two balances are green and ready.</CardDescription>
@@ -203,23 +210,23 @@ export default function DashboardPage() {
               <Badge className="border-none bg-emerald-50 text-emerald-700">Auto-pay enabled</Badge>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+              <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                <div className="flex-1">
+                <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-slate-900">Ben - utilities</p>
                   <p className="text-xs text-slate-500">$140 will clear tonight</p>
                 </div>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" className="w-full sm:w-auto">
                   Review
                 </Button>
               </div>
-              <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+              <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                <div className="flex-1">
+                <div className="flex-1 text-left">
                   <p className="text-sm font-medium text-slate-900">Maya - brunch club</p>
                   <p className="text-xs text-slate-500">$65 ready to payout</p>
                 </div>
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" className="w-full sm:w-auto">
                   Review
                 </Button>
               </div>
