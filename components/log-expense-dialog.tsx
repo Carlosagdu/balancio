@@ -14,9 +14,10 @@ type Member = {
 
 type LogExpenseDialogProps = {
   members: Member[];
+  groupId: string;
 };
 
-export function LogExpenseDialog({ members }: LogExpenseDialogProps) {
+export function LogExpenseDialog({ members, groupId }: LogExpenseDialogProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -32,6 +33,7 @@ export function LogExpenseDialog({ members }: LogExpenseDialogProps) {
           Describe the bill, amount, date, and who covered it. Splits stay even.
         </DialogDescription>
         <form className="mt-4 space-y-4" action="/api/expenses" method="post">
+          <input type="hidden" name="groupId" value={groupId} />
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="dialog-expense-description">
               Description

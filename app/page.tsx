@@ -218,7 +218,7 @@ export default function DashboardPage() {
           <Button variant="outline" className="w-full sm:w-auto">
             Settle up
           </Button>
-          <LogExpenseDialog members={members} />
+          <LogExpenseDialog members={members} groupId={group.id} />
         </div>
       </section>
 
