@@ -1,11 +1,14 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { ArrowUpRight, CopyCheck, Plus, RefreshCcw, UsersRound, Wallet } from "lucide-react";
+import { LogExpenseDialog } from "@/components/log-expense-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ThemeToggle } from "@/components/theme-toggle";
+
+const currentMemberId = "member-you";
 
 type SummaryCard = {
   title: string;
@@ -43,8 +46,6 @@ type BalanceRow = {
   debtorId: string;
   amount: number;
 };
-
-const currentMemberId = "member-you";
 
 const group = {
   id: "group-lisbon",
@@ -124,6 +125,20 @@ const balances: BalanceRow[] = [
   }
 ];
 
+function formatCurrency(value: number, currency = "USD") {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency
+  }).format(value);
+}
+
+function formatDate(isoDate: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric"
+  }).format(new Date(isoDate));
+}
+
 const totalGroupSpend = expenses.reduce((sum, expense) => sum + expense.amount, 0);
 const friendsOweYouTotal = balances
   .filter((balance) => balance.creditorId === currentMemberId)
@@ -181,21 +196,8 @@ const summaryCards: SummaryCard[] = [
   }
 ];
 
-function formatCurrency(value: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency
-  }).format(value);
-}
-
-function formatDate(isoDate: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric"
-  }).format(new Date(isoDate));
-}
-
 export default function DashboardPage() {
+
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
       <section className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
@@ -216,9 +218,7 @@ export default function DashboardPage() {
           <Button variant="outline" className="w-full sm:w-auto">
             Settle up
           </Button>
-          <Button variant="ghost" className="w-full justify-center sm:w-auto sm:justify-normal">
-            <Plus className="mr-2 h-4 w-4" /> Add expense
-          </Button>
+          <LogExpenseDialog members={members} />
         </div>
       </section>
 
