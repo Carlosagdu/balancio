@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { ArrowUpRight, CheckCircle2, Plus, Wallet } from "lucide-react";
+import { CreateGroupCard } from "@/components/create-group-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -90,7 +91,7 @@ export default function DashboardPage() {
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
       <section className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-wide text-slate-500">Balancio</p>
+          <p className="text-sm uppercase tracking-wide text-slate-500">Dashboard</p>
           <h1 className="text-3xl font-semibold text-slate-900">Shared expenses</h1>
           <p className="text-sm text-slate-500">
             Keep every split tidy and transparent. Light visuals only, no gradients.
@@ -104,6 +105,10 @@ export default function DashboardPage() {
             <Plus className="mr-2 h-4 w-4" /> Add expense
           </Button>
         </div>
+      </section>
+
+      <section>
+        <CreateGroupCard />
       </section>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
