@@ -8,4 +8,10 @@
 
 body {
   background-color: theme("colors.background");
+  color: theme("colors.slate.900");
+}
+
+.dark body {
+  background-color: #0f172a;
+  color: #e2e8f0;
 }

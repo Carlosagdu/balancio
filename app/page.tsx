@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type SummaryCard = {
   title: string;
@@ -168,14 +169,14 @@ const summaryCards: SummaryCard[] = [
     title: "Friends owe you",
     value: formatCurrency(friendsOweYouTotal),
     description: friendsOweYouTotal > 0 ? "Collect when ready" : "All settled",
-    accent: "text-emerald-600",
+    accent: "text-emerald-600 dark:text-emerald-400",
     icon: CopyCheck
   },
   {
     title: "You owe",
     value: formatCurrency(youOweTotal),
     description: youOweTotal > 0 ? "Send a quick payback" : "Nothing pending",
-    accent: youOweTotal > 0 ? "text-amber-600" : "text-slate-900",
+    accent: youOweTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100",
     icon: RefreshCcw
   }
 ];
@@ -199,13 +200,14 @@ export default function DashboardPage() {
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
       <section className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-wide text-slate-500">Dashboard</p>
-          <h1 className="text-3xl font-semibold text-slate-900">Shared expenses</h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">Dashboard</p>
+          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">Shared expenses</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Keep every split tidy and transparent. Light visuals only, no gradients.
           </p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <ThemeToggle />
           <Button asChild className="w-full sm:w-auto">
             <Link href="/groups/new">
               <UsersRound className="mr-2 h-4 w-4" /> New group
@@ -235,7 +237,7 @@ export default function DashboardPage() {
               )}
             </CardHeader>
             <CardContent>
-              <p className={`text-3xl font-semibold ${card.accent ?? "text-slate-900"}`}>
+              <p className={`text-3xl font-semibold ${card.accent ?? "text-slate-900 dark:text-slate-100"}`}>
                 {card.value}
               </p>
             </CardContent>
@@ -250,7 +252,7 @@ export default function DashboardPage() {
               <CardTitle>{group.name}</CardTitle>
               <CardDescription>Manage members and quick invites.</CardDescription>
             </div>
-            <Badge className="w-max border-none bg-slate-100 text-slate-600">
+            <Badge className="w-max border-none bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               {members.length} members
             </Badge>
           </CardHeader>
@@ -258,15 +260,15 @@ export default function DashboardPage() {
             {members.map((member) => (
               <div key={member.id} className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{member.name}</p>
-                  <p className="text-xs text-slate-500">{member.email ?? "Invite pending"}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{member.name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{member.email ?? "Invite pending"}</p>
                 </div>
                 {member.role && (
-                  <Badge className="bg-blue-50 text-blue-700">{member.role}</Badge>
+                  <Badge className="bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200">{member.role}</Badge>
                 )}
               </div>
             ))}
-            <Button variant="ghost" className="w-full justify-center border border-dashed border-slate-200">
+            <Button variant="ghost" className="w-full justify-center border border-dashed border-slate-200 dark:border-slate-700">
               Invite member
             </Button>
           </CardContent>
@@ -278,7 +280,7 @@ export default function DashboardPage() {
               <CardTitle>Logged expenses</CardTitle>
               <CardDescription>Mirror of the Prisma Expense table.</CardDescription>
             </div>
-            <Button variant="ghost" className="w-full justify-between text-slate-500 sm:w-auto">
+            <Button variant="ghost" className="w-full justify-between text-slate-500 dark:text-slate-300 sm:w-auto">
               View all
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Button>
@@ -287,12 +289,12 @@ export default function DashboardPage() {
             {expenses.map((expense) => (
               <div key={expense.id} className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium text-slate-900">{expense.description}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{expense.description}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {formatDate(expense.date)} · Paid by {memberMap[expense.paidById]?.name ?? "Unknown"}
                   </p>
                 </div>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {formatCurrency(expense.amount, expense.currency)}
                 </p>
               </div>
@@ -307,7 +309,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {balances.length === 0 ? (
-              <p className="text-sm text-slate-500">All balances are settled.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">All balances are settled.</p>
             ) : (
               balances.map((balance) => {
                 const creditor = memberMap[balance.creditorId];
@@ -315,23 +317,23 @@ export default function DashboardPage() {
                 const isYouCreditor = balance.creditorId === currentMemberId;
                 const isYouDebtor = balance.debtorId === currentMemberId;
                 return (
-                  <div key={balance.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <div key={balance.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-slate-900">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
                           {debtor?.name} owes {creditor?.name}
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           Even split balance inside {group.name}
                         </p>
                       </div>
-                      <span className="text-sm font-semibold text-slate-900">
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {formatCurrency(balance.amount)}
                       </span>
                     </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
-                      {isYouCreditor && <Badge className="bg-emerald-50 text-emerald-700">You receive</Badge>}
-                      {isYouDebtor && <Badge className="bg-amber-50 text-amber-700">You owe</Badge>}
+                    <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      {isYouCreditor && <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">You receive</Badge>}
+                      {isYouDebtor && <Badge className="bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">You owe</Badge>}
                     </div>
                   </div>
                 );
@@ -351,15 +353,15 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             {expenses.map((expense) => (
-              <div key={expense.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+              <div key={expense.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{expense.description}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{expense.description}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {formatDate(expense.date)} · Paid by {memberMap[expense.paidById]?.name}
                     </p>
                   </div>
-                  <span className="text-base font-semibold text-slate-900">
+                  <span className="text-base font-semibold text-slate-900 dark:text-slate-100">
                     {formatCurrency(expense.amount, expense.currency)}
                   </span>
                 </div>
@@ -367,7 +369,10 @@ export default function DashboardPage() {
                   {expense.shares.map((share) => {
                     const shareName = memberMap[share.memberId]?.name ?? "Member";
                     return (
-                      <Badge key={`${expense.id}-${share.memberId}`} className="bg-slate-100 text-slate-600">
+                      <Badge
+                        key={`${expense.id}-${share.memberId}`}
+                        className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                      >
                         {shareName.split(" ")[0]} · {formatCurrency(share.amount, expense.currency)}
                       </Badge>
                     );
@@ -387,21 +392,27 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-5">
             {memberSummaries.map(({ member, paid, share, owes, owed, settledRatio, net }) => (
-              <div key={member.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+              <div key={member.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{member.name}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{member.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Paid {formatCurrency(paid)} · Share {formatCurrency(share)}
                     </p>
                   </div>
-                  <Badge className={net >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}>
+                  <Badge
+                    className={
+                      net >= 0
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                        : "bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200"
+                    }
+                  >
                     {net >= 0 ? "Ahead" : "Needs to settle"}
                   </Badge>
                 </div>
                 <div className="mt-3 space-y-2">
                   <Progress value={settledRatio} />
-                  <div className="flex items-center justify-between text-xs text-slate-500">
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                     <span>{owed > 0 ? `${formatCurrency(owed)} to collect` : "No credits"}</span>
                     <span>{owes > 0 ? `${formatCurrency(owes)} to send` : "Settled"}</span>
                   </div>
