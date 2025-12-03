@@ -1,6 +1,6 @@
+import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ArrowUpRight, CopyCheck, Plus, RefreshCcw, Wallet } from "lucide-react";
-import { CreateGroupCard } from "@/components/create-group-card";
+import { ArrowUpRight, CopyCheck, Plus, RefreshCcw, UsersRound, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -206,17 +206,18 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild className="w-full sm:w-auto">
+            <Link href="/groups/new">
+              <UsersRound className="mr-2 h-4 w-4" /> New group
+            </Link>
+          </Button>
           <Button variant="outline" className="w-full sm:w-auto">
             Settle up
           </Button>
-          <Button className="w-full sm:w-auto">
+          <Button variant="ghost" className="w-full justify-center sm:w-auto sm:justify-normal">
             <Plus className="mr-2 h-4 w-4" /> Add expense
           </Button>
         </div>
-      </section>
-
-      <section>
-        <CreateGroupCard />
       </section>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
