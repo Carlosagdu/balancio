@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { ArrowUpRight, CheckCircle2, Plus, Wallet } from "lucide-react";
+import { ArrowUpRight, CopyCheck, Plus, RefreshCcw, Wallet } from "lucide-react";
 import { CreateGroupCard } from "@/components/create-group-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,77 +14,185 @@ type SummaryCard = {
   icon?: LucideIcon;
 };
 
+type Member = {
+  id: string;
+  name: string;
+  email?: string;
+  role?: "Organizer" | "Guest";
+};
+
+type ExpenseShareRow = {
+  memberId: string;
+  amount: number;
+};
+
+type Expense = {
+  id: string;
+  description: string;
+  date: string;
+  amount: number;
+  currency: string;
+  paidById: string;
+  shares: ExpenseShareRow[];
+};
+
+type BalanceRow = {
+  id: string;
+  creditorId: string;
+  debtorId: string;
+  amount: number;
+};
+
+const currentMemberId = "member-you";
+
+const group = {
+  id: "group-lisbon",
+  name: "Lisbon Getaway",
+  createdAt: "2024-07-01"
+};
+
+const members: Member[] = [
+  { id: currentMemberId, name: "Nico Vega", email: "you@balancio.app", role: "Organizer" },
+  { id: "member-maya", name: "Maya Estevez", email: "maya@balancio.app" },
+  { id: "member-leo", name: "Leo Jensen", email: "leo@balancio.app" },
+  { id: "member-ana", name: "Ana Viera", email: "ana@balancio.app" }
+];
+
+const memberMap = members.reduce<Record<string, Member>>((map, member) => {
+  map[member.id] = member;
+  return map;
+}, {});
+
+const expenses: Expense[] = [
+  {
+    id: "expense-1",
+    description: "Alfama loft weekend",
+    date: "2024-07-02",
+    amount: 720,
+    currency: "USD",
+    paidById: "member-maya",
+    shares: members.map((member) => ({
+      memberId: member.id,
+      amount: 180
+    }))
+  },
+  {
+    id: "expense-2",
+    description: "Surf lessons",
+    date: "2024-07-04",
+    amount: 260,
+    currency: "USD",
+    paidById: currentMemberId,
+    shares: members.map((member) => ({
+      memberId: member.id,
+      amount: 65
+    }))
+  },
+  {
+    id: "expense-3",
+    description: "Barrio Alto dinner",
+    date: "2024-07-05",
+    amount: 148,
+    currency: "USD",
+    paidById: "member-leo",
+    shares: members.map((member) => ({
+      memberId: member.id,
+      amount: 37
+    }))
+  }
+];
+
+const balances: BalanceRow[] = [
+  {
+    id: "balance-1",
+    creditorId: "member-maya",
+    debtorId: currentMemberId,
+    amount: 115
+  },
+  {
+    id: "balance-2",
+    creditorId: "member-maya",
+    debtorId: "member-leo",
+    amount: 115
+  },
+  {
+    id: "balance-3",
+    creditorId: currentMemberId,
+    debtorId: "member-ana",
+    amount: 65
+  }
+];
+
+const totalGroupSpend = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+const friendsOweYouTotal = balances
+  .filter((balance) => balance.creditorId === currentMemberId)
+  .reduce((sum, balance) => sum + balance.amount, 0);
+const youOweTotal = balances
+  .filter((balance) => balance.debtorId === currentMemberId)
+  .reduce((sum, balance) => sum + balance.amount, 0);
+
+const memberSummaries = members.map((member) => {
+  const paid = expenses
+    .filter((expense) => expense.paidById === member.id)
+    .reduce((sum, expense) => sum + expense.amount, 0);
+  const share = expenses.reduce((sum, expense) => {
+    const shareRow = expense.shares.find((row) => row.memberId === member.id);
+    return shareRow ? sum + shareRow.amount : sum;
+  }, 0);
+  const owes = balances
+    .filter((balance) => balance.debtorId === member.id)
+    .reduce((sum, balance) => sum + balance.amount, 0);
+  const owed = balances
+    .filter((balance) => balance.creditorId === member.id)
+    .reduce((sum, balance) => sum + balance.amount, 0);
+  const settledRatio = share ? Math.min((paid / share) * 100, 100) : 100;
+  return {
+    member,
+    paid,
+    share,
+    owes,
+    owed,
+    settledRatio,
+    net: paid - share
+  };
+});
+
 const summaryCards: SummaryCard[] = [
   {
-    title: "Shared this month",
-    value: "$1,280",
-    description: "Across 12 expenses",
+    title: "Group spend",
+    value: formatCurrency(totalGroupSpend),
+    description: `${expenses.length} logged expenses`,
     icon: Wallet
   },
   {
     title: "Friends owe you",
-    value: "$540",
-    description: "3 open balances",
-    accent: "text-emerald-600"
+    value: formatCurrency(friendsOweYouTotal),
+    description: friendsOweYouTotal > 0 ? "Collect when ready" : "All settled",
+    accent: "text-emerald-600",
+    icon: CopyCheck
   },
   {
     title: "You owe",
-    value: "$310",
-    description: "2 pending invites",
-    accent: "text-amber-600"
+    value: formatCurrency(youOweTotal),
+    description: youOweTotal > 0 ? "Send a quick payback" : "Nothing pending",
+    accent: youOweTotal > 0 ? "text-amber-600" : "text-slate-900",
+    icon: RefreshCcw
   }
 ];
 
-const activeSplits = [
-  {
-    id: "lisbon-trip",
-    name: "Lisbon trip",
-    members: ["You", "Maya", "Leo", "Ana"],
-    progress: 72,
-    youOwe: "$80",
-    due: "Due in 3 days"
-  },
-  {
-    id: "flat-utilities",
-    name: "Flat utilities",
-    members: ["You", "Ben", "Victoria"],
-    progress: 54,
-    youOwe: "$120",
-    due: "Auto-settle on 28th"
-  },
-  {
-    id: "Brunch club",
-    name: "Saturday brunch club",
-    members: ["You", "Cam", "Isabela"],
-    progress: 38,
-    youOwe: "$45",
-    due: "Next meetup Sunday"
-  }
-];
+function formatCurrency(value: number, currency = "USD") {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency
+  }).format(value);
+}
 
-const recentActivity = [
-  {
-    id: "1",
-    title: "Maya covered groceries",
-    detail: "Split four ways",
-    amount: "$64",
-    type: "credit"
-  },
-  {
-    id: "2",
-    title: "You logged ride shares",
-    detail: "Weekend hangouts group",
-    amount: "$48",
-    type: "debit"
-  },
-  {
-    id: "3",
-    title: "Ben settled rent top-up",
-    detail: "Utilities split",
-    amount: "$220",
-    type: "credit"
-  }
-];
+function formatDate(isoDate: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric"
+  }).format(new Date(isoDate));
+}
 
 export default function DashboardPage() {
   return (
@@ -134,110 +242,173 @@ export default function DashboardPage() {
         ))}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
+      <section className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <CardTitle>Active splits</CardTitle>
-              <CardDescription>Minimal overview across your current groups.</CardDescription>
+              <CardTitle>{group.name}</CardTitle>
+              <CardDescription>Manage members and quick invites.</CardDescription>
             </div>
-            <Badge className="w-max border-none bg-slate-100 text-slate-600">3 groups</Badge>
+            <Badge className="w-max border-none bg-slate-100 text-slate-600">
+              {members.length} members
+            </Badge>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {members.map((member) => (
+              <div key={member.id} className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{member.name}</p>
+                  <p className="text-xs text-slate-500">{member.email ?? "Invite pending"}</p>
+                </div>
+                {member.role && (
+                  <Badge className="bg-blue-50 text-blue-700">{member.role}</Badge>
+                )}
+              </div>
+            ))}
+            <Button variant="ghost" className="w-full justify-center border border-dashed border-slate-200">
+              Invite member
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Logged expenses</CardTitle>
+              <CardDescription>Mirror of the Prisma Expense table.</CardDescription>
+            </div>
+            <Button variant="ghost" className="w-full justify-between text-slate-500 sm:w-auto">
+              View all
+              <ArrowUpRight className="ml-1 h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {expenses.map((expense) => (
+              <div key={expense.id} className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{expense.description}</p>
+                  <p className="text-xs text-slate-500">
+                    {formatDate(expense.date)} · Paid by {memberMap[expense.paidById]?.name ?? "Unknown"}
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {formatCurrency(expense.amount, expense.currency)}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Balance ledger</CardTitle>
+            <CardDescription>Track who owes whom right now.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {balances.length === 0 ? (
+              <p className="text-sm text-slate-500">All balances are settled.</p>
+            ) : (
+              balances.map((balance) => {
+                const creditor = memberMap[balance.creditorId];
+                const debtor = memberMap[balance.debtorId];
+                const isYouCreditor = balance.creditorId === currentMemberId;
+                const isYouDebtor = balance.debtorId === currentMemberId;
+                return (
+                  <div key={balance.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          {debtor?.name} owes {creditor?.name}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Even split balance inside {group.name}
+                        </p>
+                      </div>
+                      <span className="text-sm font-semibold text-slate-900">
+                        {formatCurrency(balance.amount)}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                      {isYouCreditor && <Badge className="bg-emerald-50 text-emerald-700">You receive</Badge>}
+                      {isYouDebtor && <Badge className="bg-amber-50 text-amber-700">You owe</Badge>}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Expense breakdown</CardTitle>
+              <CardDescription>Each expense is evenly split between members.</CardDescription>
+            </div>
           </CardHeader>
           <CardContent className="space-y-5">
-            {activeSplits.map((split) => (
-              <div
-                key={split.id}
-                className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5"
-              >
+            {expenses.map((expense) => (
+              <div key={expense.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-900">{split.name}</p>
-                    <p className="text-sm text-slate-500">{split.members.join(" • ")}</p>
+                    <p className="text-sm font-semibold text-slate-900">{expense.description}</p>
+                    <p className="text-xs text-slate-500">
+                      {formatDate(expense.date)} · Paid by {memberMap[expense.paidById]?.name}
+                    </p>
                   </div>
-                  <Badge className="bg-slate-100 text-slate-600">{split.due}</Badge>
+                  <span className="text-base font-semibold text-slate-900">
+                    {formatCurrency(expense.amount, expense.currency)}
+                  </span>
                 </div>
-                <div className="mt-4 space-y-3">
-                  <Progress value={split.progress} />
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-slate-500">Completion</p>
-                      <p className="font-semibold text-slate-900">{split.progress}%</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">You owe</p>
-                      <p className="font-semibold text-slate-900">{split.youOwe}</p>
-                    </div>
-                  </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {expense.shares.map((share) => {
+                    const shareName = memberMap[share.memberId]?.name ?? "Member";
+                    return (
+                      <Badge key={`${expense.id}-${share.memberId}`} className="bg-slate-100 text-slate-600">
+                        {shareName.split(" ")[0]} · {formatCurrency(share.amount, expense.currency)}
+                      </Badge>
+                    );
+                  })}
                 </div>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle>Recent activity</CardTitle>
-                <CardDescription>Simple list of what changed.</CardDescription>
-              </div>
-              <Button variant="ghost" className="w-full justify-between text-slate-500 sm:w-auto">
-                View all
-                <ArrowUpRight className="ml-1 h-4 w-4" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">{activity.title}</p>
-                    <p className="text-xs text-slate-500">{activity.detail}</p>
+        <Card>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Member settlement status</CardTitle>
+              <CardDescription>Compare paid amount versus even share.</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {memberSummaries.map(({ member, paid, share, owes, owed, settledRatio, net }) => (
+              <div key={member.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{member.name}</p>
+                    <p className="text-xs text-slate-500">
+                      Paid {formatCurrency(paid)} · Share {formatCurrency(share)}
+                    </p>
                   </div>
-                  <span
-                    className={`text-sm font-semibold ${
-                      activity.type === "credit" ? "text-emerald-600" : "text-amber-600"
-                    }`}
-                  >
-                    {activity.type === "credit" ? "+" : "-"}
-                    {activity.amount}
-                  </span>
+                  <Badge className={net >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}>
+                    {net >= 0 ? "Ahead" : "Needs to settle"}
+                  </Badge>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle>Ready to settle</CardTitle>
-                <CardDescription>Two balances are green and ready.</CardDescription>
-              </div>
-              <Badge className="border-none bg-emerald-50 text-emerald-700">Auto-pay enabled</Badge>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-slate-900">Ben - utilities</p>
-                  <p className="text-xs text-slate-500">$140 will clear tonight</p>
+                <div className="mt-3 space-y-2">
+                  <Progress value={settledRatio} />
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>{owed > 0 ? `${formatCurrency(owed)} to collect` : "No credits"}</span>
+                    <span>{owes > 0 ? `${formatCurrency(owes)} to send` : "Settled"}</span>
+                  </div>
                 </div>
-                <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                  Review
-                </Button>
               </div>
-              <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-slate-900">Maya - brunch club</p>
-                  <p className="text-xs text-slate-500">$65 ready to payout</p>
-                </div>
-                <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                  Review
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            ))}
+          </CardContent>
+        </Card>
       </section>
     </main>
   );
