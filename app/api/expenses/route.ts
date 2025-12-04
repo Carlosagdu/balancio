@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db/index";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -13,4 +14,9 @@ export async function POST(request: Request) {
 
   // TODO: Persist when the backend is wired up.
   return NextResponse.json({ message: "Expense received", payload: { description, amount, date, paidById } });
+}
+
+export async function GET(){
+  const expenses = await db.query.expenses.findMany();
+  return NextResponse.json({data:expenses})
 }
