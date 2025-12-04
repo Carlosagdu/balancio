@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, Copy, Share2, UserPlus } from "lucide-react";
 
+//TODO remove default members and update logic to actual members
 const defaultMembers = ["maya@crew.com", "leo@crew.com"];
 
 export function CreateGroupCard() {
