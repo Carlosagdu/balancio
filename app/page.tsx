@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { ArrowUpRight, CopyCheck, RefreshCcw, UsersRound, Wallet } from "lucide-react";
 import { db } from "@/db/index";
-import { LogExpenseDialog } from "@/components/log-expense-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -137,13 +136,6 @@ export default async function DashboardPage() {
           <Button variant="outline" className="w-full sm:w-auto">
             Settle up
           </Button>
-          {activeGroup && members.length > 0 ? (
-            <LogExpenseDialog members={members} groupId={activeGroup.id} />
-          ) : (
-            <Button variant="ghost" className="w-full justify-center sm:w-auto" disabled>
-              Add members first
-            </Button>
-          )}
         </div>
       </section>
 
@@ -181,13 +173,9 @@ export default async function DashboardPage() {
                     <Button asChild variant="outline" className="w-full sm:w-auto">
                       <Link href={`/groups/${group.id}`}>Open group</Link>
                     </Button>
-                    {group.members.length > 0 ? (
-                      <LogExpenseDialog members={group.members} groupId={group.id} />
-                    ) : (
-                      <Button variant="ghost" className="w-full justify-center sm:w-auto" disabled>
-                        Add members first
-                      </Button>
-                    )}
+                    <Button asChild variant="ghost" className="w-full justify-center sm:w-auto">
+                      <Link href={`/groups/${group.id}`}>View details</Link>
+                    </Button>
                   </div>
                 </div>
               ))
