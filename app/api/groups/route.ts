@@ -12,8 +12,13 @@ function formatMemberName(email: string) {
     .trim() || "Friend";
 }
 
+type CreateGroupPayload = {
+  name?: unknown;
+  invitees?: unknown;
+};
+
 export async function POST(request: Request) {
-  const payload = await request.json().catch(() => null);
+  const payload = (await request.json().catch(() => null)) as CreateGroupPayload | null;
 
   if (!payload || typeof payload !== "object") {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
