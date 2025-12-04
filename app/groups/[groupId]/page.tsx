@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { ArrowLeft, ArrowUpRight, CopyCheck, RefreshCcw, Wallet } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, RefreshCcw, Wallet } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/index";
 import { groups } from "@/db/schema";
@@ -74,16 +74,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
   const totalGroupSpend = expenses.reduce((sum, expense) => sum + asNumber(expense.amount), 0);
   const averageExpense = expenses.length > 0 ? totalGroupSpend / expenses.length : 0;
 
-  const friendsOweYouTotal = currentMemberId
-    ? balances
-        .filter((balance) => balance.creditorId === currentMemberId)
-        .reduce((sum, balance) => sum + asNumber(balance.amount), 0)
-    : 0;
-  const youOweTotal = currentMemberId
-    ? balances
-        .filter((balance) => balance.debtorId === currentMemberId)
-        .reduce((sum, balance) => sum + asNumber(balance.amount), 0)
-    : 0;
+  const outstandingTotal = balances.reduce((sum, balance) => sum + asNumber(balance.amount), 0);
 
   const summaryCards: SummaryCard[] = [
     {
@@ -99,17 +90,10 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
       icon: ArrowUpRight
     },
     {
-      title: "Friends owe you",
-      value: formatCurrency(friendsOweYouTotal),
-      description: friendsOweYouTotal > 0 ? "Collect when ready" : currentMemberId ? "All settled" : "Add yourself to a group",
-      accent: "text-emerald-600 dark:text-emerald-400",
-      icon: CopyCheck
-    },
-    {
-      title: "You owe",
-      value: formatCurrency(youOweTotal),
-      description: youOweTotal > 0 ? "Send a quick payback" : currentMemberId ? "Nothing pending" : "Add yourself to this group",
-      accent: youOweTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100",
+      title: "Outstanding balance",
+      value: formatCurrency(outstandingTotal),
+      description: balances.length > 0 ? `${balances.length} ledger item${balances.length === 1 ? "" : "s"}` : "Nothing pending",
+      accent: outstandingTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100",
       icon: RefreshCcw
     }
   ];
@@ -154,13 +138,18 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
               <ArrowLeft className="h-4 w-4" /> Back to dashboard
             </Link>
           </Button>
-          {members.length > 0 ? (
-            <LogExpenseDialog members={members} groupId={group.id} />
-          ) : (
-            <Button variant="ghost" disabled>
-              Add members to log expenses
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link href={`/groups/${group.id}/ledger`}>Balance ledger</Link>
             </Button>
-          )}
+            {members.length > 0 ? (
+              <LogExpenseDialog members={members} groupId={group.id} />
+            ) : (
+              <Button variant="ghost" disabled>
+                Add members to log expenses
+              </Button>
+            )}
+          </div>
         </div>
         <div>
           <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">Group detail</p>

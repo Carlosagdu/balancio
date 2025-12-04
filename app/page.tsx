@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ArrowUpRight, CopyCheck, RefreshCcw, UsersRound, Wallet } from "lucide-react";
+import { ArrowUpRight, RefreshCcw, UsersRound, Wallet } from "lucide-react";
 import { db } from "@/db/index";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,16 +56,7 @@ export default async function DashboardPage() {
   const currentMemberId = members[0]?.id ?? null;
 
   const totalGroupSpend = expenses.reduce((sum, expense) => sum + asNumber(expense.amount), 0);
-  const friendsOweYouTotal = currentMemberId
-    ? balances
-        .filter((balance) => balance.creditorId === currentMemberId)
-        .reduce((sum, balance) => sum + asNumber(balance.amount), 0)
-    : 0;
-  const youOweTotal = currentMemberId
-    ? balances
-        .filter((balance) => balance.debtorId === currentMemberId)
-        .reduce((sum, balance) => sum + asNumber(balance.amount), 0)
-    : 0;
+  const outstandingTotal = balances.reduce((sum, balance) => sum + asNumber(balance.amount), 0);
 
   const memberSummaries = members.map((member) => {
     const paid = expenses
@@ -101,17 +92,10 @@ export default async function DashboardPage() {
       icon: Wallet
     },
     {
-      title: "Friends owe you",
-      value: formatCurrency(friendsOweYouTotal),
-      description: friendsOweYouTotal > 0 ? "Collect when ready" : currentMemberId ? "All settled" : "Add yourself to a group",
-      accent: "text-emerald-600 dark:text-emerald-400",
-      icon: CopyCheck
-    },
-    {
-      title: "You owe",
-      value: formatCurrency(youOweTotal),
-      description: youOweTotal > 0 ? "Send a quick payback" : currentMemberId ? "Nothing pending" : "Add yourself to a group",
-      accent: youOweTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100",
+      title: "Outstanding balance",
+      value: formatCurrency(outstandingTotal),
+      description: balances.length > 0 ? `${balances.length} ledger item${balances.length === 1 ? "" : "s"}` : "No balances yet",
+      accent: outstandingTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100",
       icon: RefreshCcw
     }
   ];
