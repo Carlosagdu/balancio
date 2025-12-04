@@ -140,6 +140,11 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
     };
   });
 
+  const memberBalanceSummaries = memberSummaries.map((summary) => ({
+    member: summary.member,
+    balance: summary.owed - summary.owes
+  }));
+
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6 lg:py-10">
       <section className="space-y-4">
@@ -277,6 +282,48 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Group balances</CardTitle>
+              <CardDescription>Everyone&apos;s current position inside this group.</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {memberBalanceSummaries.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Add members to see balances.</p>
+            ) : (
+              memberBalanceSummaries.map(({ member, balance }) => (
+                <div
+                  key={member.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{member.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{member.email ?? "Invite pending"}</p>
+                  </div>
+                  <div className="text-right">
+                    <p
+                      className={`text-sm font-semibold ${
+                        balance > 0
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : balance < 0
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-slate-600 dark:text-slate-300"
+                      }`}
+                    >
+                      {balance === 0 ? "Settled" : formatCurrency(Math.abs(balance))}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {balance > 0 ? "To collect" : balance < 0 ? "To pay" : "Even split"}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
