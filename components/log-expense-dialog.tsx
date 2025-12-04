@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,38 @@ type LogExpenseDialogProps = {
 
 export function LogExpenseDialog({ members, groupId }: LogExpenseDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusVariant, setStatusVariant] = useState<"success" | "error" | null>(null);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    setIsLoading(true);
+    setStatusMessage(null);
+    setStatusVariant(null);
+    try {
+      const response = await fetch("/api/expenses", {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error ?? "Unable to save expense");
+      }
+
+      form.reset();
+      setStatusMessage("Expense saved successfully.");
+      setStatusVariant("success");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Failed to save expense");
+      setStatusVariant("error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -32,7 +64,7 @@ export function LogExpenseDialog({ members, groupId }: LogExpenseDialogProps) {
         <DialogDescription className="text-sm text-slate-500 dark:text-slate-400">
           Describe the bill, amount, date, and who covered it. Splits stay even.
         </DialogDescription>
-        <form className="mt-4 space-y-4" action="/api/expenses" method="post">
+        <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
           <input type="hidden" name="groupId" value={groupId} />
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="dialog-expense-description">
@@ -76,13 +108,18 @@ export function LogExpenseDialog({ members, groupId }: LogExpenseDialogProps) {
               ))}
             </select>
           </div>
-          <Button type="submit" className="w-full">
-            Save expense
+          <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
+            {isLoading ? "Saving..." : "Save expense"}
           </Button>
         </form>
-        <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Even split</Badge>
-          <span>Form posts to /api/expenses when backend is ready.</span>
+        <div className="mt-4 flex flex-col gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex flex-wrap gap-2">
+            <Badge className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Even split</Badge>
+            <span>We split evenly across the group.</span>
+          </div>
+          {statusMessage && (
+            <p className={statusVariant === "error" ? "text-red-600" : "text-emerald-600"}>{statusMessage}</p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

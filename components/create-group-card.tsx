@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,26 +10,16 @@ import { CheckCircle2, Copy, Share2, UserPlus } from "lucide-react";
 
 const defaultMembers = ["maya@crew.com", "leo@crew.com"];
 
-function slugify(input: string) {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
-}
-
 export function CreateGroupCard() {
+  const router = useRouter();
   const [groupName, setGroupName] = useState("City picnic");
   const [memberInput, setMemberInput] = useState("");
   const [members, setMembers] = useState<string[]>(defaultMembers);
   const [shareLink, setShareLink] = useState("");
   const [feedback, setFeedback] = useState("");
   const [copied, setCopied] = useState(false);
-
-  const generatedLink = useMemo(() => {
-    if (!groupName) return "";
-    const slug = slugify(groupName) || "new-group";
-    return `https://sharebill.app/${slug}-${members.length}`;
-  }, [groupName, members.length]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
   const handleAddMember = () => {
     if (!memberInput.trim()) {
@@ -44,19 +35,52 @@ export function CreateGroupCard() {
     setFeedback("");
   };
 
-  const handleCreateGroup = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateGroup = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!groupName.trim()) {
       setFeedback("Give the group a friendly name first.");
+      setStatus("error");
       return;
     }
     if (members.length === 0) {
       setFeedback("Invite at least one friend to start the split.");
+      setStatus("error");
       return;
     }
-    setShareLink(generatedLink);
-    setCopied(false);
-    setFeedback("Group saved. Share the invite link below.");
+    setIsSubmitting(true);
+    setFeedback("");
+    setStatus("idle");
+    try {
+      const response = await fetch("/api/groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: groupName, invitees: members })
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error ?? "Unable to create group");
+      }
+
+      const payload = await response.json();
+      const createdLink =
+        typeof window !== "undefined" ? `${window.location.origin}/groups/${payload.groupId}` : `/groups/${payload.groupId}`;
+
+      setShareLink(createdLink);
+      setCopied(false);
+      setFeedback("Group saved. Share the invite link or head back to your dashboard.");
+      setStatus("success");
+      router.prefetch("/");
+      setTimeout(() => {
+        router.push("/");
+        router.refresh();
+      }, 600);
+    } catch (error) {
+      setStatus("error");
+      setFeedback(error instanceof Error ? error.message : "Failed to create group");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCopy = async () => {
@@ -117,11 +141,19 @@ export function CreateGroupCard() {
             </div>
           )}
 
-          {feedback && <p className="text-sm text-slate-500 dark:text-slate-400">{feedback}</p>}
+          {feedback && (
+            <p
+              className={`text-sm ${
+                status === "error" ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
+              }`}
+            >
+              {feedback}
+            </p>
+          )}
 
-          <Button type="submit" className="w-full sm:w-auto">
+          <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
             <Share2 className="mr-2 h-4 w-4" />
-            Create group
+            {isSubmitting ? "Creating..." : "Create group"}
           </Button>
         </form>
 

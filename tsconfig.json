@@ -21,15 +21,15 @@
       "@/components/*": [
         "./components/*"
       ],
+      "@/db/*": [
+        "./db/*"
+      ],
       "@/lib/*": [
         "./lib/*"
       ],
       "@/app/*": [
         "./app/*"
       ],
-      "@/db/*": [
-        "./db/*"
-      ]
     },
     "plugins": [
       {
