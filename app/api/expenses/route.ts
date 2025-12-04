@@ -11,6 +11,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  // TODO: Persist with Prisma when backend is ready.
+  // TODO: Persist when the backend is wired up.
   return NextResponse.json({ message: "Expense received", payload: { description, amount, date, paidById } });
 }

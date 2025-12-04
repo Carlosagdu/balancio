@@ -278,7 +278,7 @@ export default function DashboardPage() {
           <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Logged expenses</CardTitle>
-              <CardDescription>Mirror of the Prisma Expense table.</CardDescription>
+              <CardDescription>Mirror of the current expense log.</CardDescription>
             </div>
             <Button variant="ghost" className="w-full justify-between text-slate-500 dark:text-slate-300 sm:w-auto">
               View all
