@@ -1,39 +1,72 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, Copy, Share2, UserPlus } from "lucide-react";
+import { CheckCircle2, Copy, Share2, UserPlus, X } from "lucide-react";
 
-//TODO remove default members and update logic to actual members
-const defaultMembers = ["maya@crew.com", "leo@crew.com"];
+const defaultMembers = ["maya", "leo", "charles"];
+const initialParticipantFields = 3;
+const minParticipants = 1;
 
 export function CreateGroupCard() {
   const router = useRouter();
   const [groupName, setGroupName] = useState("City picnic");
-  const [memberInput, setMemberInput] = useState("");
-  const [members, setMembers] = useState<string[]>(defaultMembers);
+  const [participants, setParticipants] = useState<string[]>(() => {
+    if (defaultMembers.length >= initialParticipantFields) return defaultMembers;
+    const padded = [...defaultMembers];
+    while (padded.length < initialParticipantFields) {
+      padded.push("");
+    }
+    return padded;
+  });
   const [shareLink, setShareLink] = useState("");
   const [feedback, setFeedback] = useState("");
   const [copied, setCopied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [defaultPayer, setDefaultPayer] = useState("");
 
-  const handleAddMember = () => {
-    if (!memberInput.trim()) {
-      setFeedback("Add a friend's email to invite them.");
+  const activeParticipants = useMemo(
+    () =>
+      participants
+        .map((email) => email.trim())
+        .filter(Boolean)
+        .filter((value, index, self) => self.indexOf(value) === index),
+    [participants]
+  );
+
+  useEffect(() => {
+    if (activeParticipants.length === 0) {
+      if (defaultPayer) {
+        setDefaultPayer("");
+      }
       return;
     }
-    if (members.includes(memberInput.trim())) {
-      setFeedback("Already on the invite list.");
-      return;
+    if (!defaultPayer || !activeParticipants.includes(defaultPayer)) {
+      setDefaultPayer(activeParticipants[0]);
     }
-    setMembers((prev) => [...prev, memberInput.trim()]);
-    setMemberInput("");
-    setFeedback("");
+  }, [activeParticipants, defaultPayer]);
+
+  const handleParticipantChange = (index: number, value: string) => {
+    setParticipants((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+  };
+
+  const handleAddParticipantField = () => {
+    setParticipants((prev) => [...prev, ""]);
+  };
+
+  const handleRemoveParticipantField = (index: number) => {
+    setParticipants((prev) => {
+      if (prev.length <= minParticipants) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   const handleCreateGroup = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -43,7 +76,9 @@ export function CreateGroupCard() {
       setStatus("error");
       return;
     }
-    if (members.length === 0) {
+    const invites = participants.map((email) => email.trim()).filter(Boolean);
+    const uniqueInvites = Array.from(new Set(invites));
+    if (uniqueInvites.length === 0) {
       setFeedback("Invite at least one friend to start the split.");
       setStatus("error");
       return;
@@ -55,7 +90,7 @@ export function CreateGroupCard() {
       const response = await fetch("/api/groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: groupName, invitees: members })
+        body: JSON.stringify({ name: groupName, invitees: uniqueInvites, defaultPayer: defaultPayer || null })
       });
 
       if (!response.ok) {
@@ -114,34 +149,61 @@ export function CreateGroupCard() {
               onChange={(event) => setGroupName(event.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="friend-email">
-              Invite friends
-            </label>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                id="friend-email"
-                placeholder="friend@email.com"
-                value={memberInput}
-                onChange={(event) => setMemberInput(event.target.value)}
-              />
-              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={handleAddMember}>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="participant-0">
+                Participants
+              </label>
+              <Button type="button" variant="ghost" size="sm" className="gap-1 text-xs" onClick={handleAddParticipantField}>
+                <UserPlus className="h-3.5 w-3.5" />
+                Add participant
               </Button>
             </div>
-          </div>
-
-          {members.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {members.map((member) => (
-                <Badge key={member} className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                  {member}
-                </Badge>
+            <div className="space-y-2">
+              {participants.map((email, index) => (
+                <div key={`participant-${index}`} className="flex gap-2">
+                  <Input
+                    id={`participant-${index}`}
+                    placeholder="friend@email.com"
+                    value={email}
+                    onChange={(event) => handleParticipantChange(index, event.target.value)}
+                  />
+                  {participants.length > minParticipants && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="px-3"
+                      onClick={() => handleRemoveParticipantField(index)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
-          )}
-
+          </div>
+                  <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="default-payer">
+              Default payer
+            </label>
+            <select
+              id="default-payer"
+              name="default-payer"
+              value={defaultPayer}
+              onChange={(event) => setDefaultPayer(event.target.value)}
+              className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              <option value="">Select a member</option>
+              {activeParticipants.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              This member will be preselected in the expense dialog. You can change it later.
+            </p>
+          </div>
           {feedback && (
             <p
               className={`text-sm ${
