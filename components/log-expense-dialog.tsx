@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,22 @@ export function LogExpenseDialog({ members, groupId }: LogExpenseDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusVariant, setStatusVariant] = useState<"success" | "error" | null>(null);
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>(members.map((member) => member.id));
+
+  useEffect(() => {
+    setSelectedParticipants(members.map((member) => member.id));
+  }, [members]);
+
+  const canSubmit = selectedParticipants.length > 0;
+
+  const handleToggleParticipant = (memberId: string) => {
+    setSelectedParticipants((prev) => {
+      if (prev.includes(memberId)) {
+        return prev.filter((id) => id !== memberId);
+      }
+      return [...prev, memberId];
+    });
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -42,6 +58,7 @@ export function LogExpenseDialog({ members, groupId }: LogExpenseDialogProps) {
       }
 
       form.reset();
+      setSelectedParticipants(members.map((member) => member.id));
       setStatusMessage("Expense saved successfully.");
       setStatusVariant("success");
     } catch (error) {
@@ -108,9 +125,32 @@ export function LogExpenseDialog({ members, groupId }: LogExpenseDialogProps) {
               ))}
             </select>
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Participants</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Only selected members will split this expense evenly.</p>
+            <div className="space-y-2 rounded-2xl border border-slate-200 p-3 dark:border-slate-700">
+              {members.map((member) => {
+                const checked = selectedParticipants.includes(member.id);
+                return (
+                  <label key={member.id} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <input
+                      type="checkbox"
+                      name="participantIds"
+                      value={member.id}
+                      checked={checked}
+                      onChange={() => handleToggleParticipant(member.id)}
+                      className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-2 focus:ring-blue-200 dark:border-slate-700 dark:bg-slate-900"
+                    />
+                    <span>{member.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading || !canSubmit} aria-busy={isLoading}>
             {isLoading ? "Saving..." : "Save expense"}
           </Button>
+          {!canSubmit && <p className="text-xs text-red-600 dark:text-red-400">Select at least one participant.</p>}
         </form>
         <div className="mt-4 flex flex-col gap-2 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex flex-wrap gap-2">

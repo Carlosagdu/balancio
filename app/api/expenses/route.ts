@@ -71,6 +71,10 @@ export async function POST(request: Request) {
   const date = formData.get("date")?.toString() ?? "";
   const paidById = formData.get("paidById")?.toString() ?? "";
   const groupId = formData.get("groupId")?.toString() ?? "";
+  const participantIds = formData
+    .getAll("participantIds")
+    .map((value) => value.toString())
+    .filter((value) => Boolean(value));
 
   if (!description || Number.isNaN(amount) || amount <= 0 || !date || !paidById || !groupId) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
@@ -89,11 +93,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Payer must belong to the group" }, { status: 400 });
   }
 
+  const uniqueParticipantIds = Array.from(new Set(participantIds.length > 0 ? participantIds : groupMembers.map((member) => member.id)));
+
+  const groupMemberSet = new Set(groupMembers.map((member) => member.id));
+  if (!uniqueParticipantIds.every((memberId) => groupMemberSet.has(memberId))) {
+    return NextResponse.json({ error: "Participants must belong to the group" }, { status: 400 });
+  }
+
+  if (!uniqueParticipantIds.includes(paidById)) {
+    return NextResponse.json({ error: "Payer must be part of the expense participants" }, { status: 400 });
+  }
+
+  if (uniqueParticipantIds.length === 0) {
+    return NextResponse.json({ error: "Select at least one participant" }, { status: 400 });
+  }
+
+  const participantMembers = uniqueParticipantIds.map((memberId) => ({ id: memberId }));
+
   const cents = Math.round(amount * 100);
-  const baseShare = Math.floor(cents / groupMembers.length);
-  const sharesInCents = groupMembers.map((_, index) => {
-    if (index === groupMembers.length - 1) {
-      const distributed = baseShare * (groupMembers.length - 1);
+  const baseShare = Math.floor(cents / participantMembers.length);
+  const sharesInCents = participantMembers.map((_, index) => {
+    if (index === participantMembers.length - 1) {
+      const distributed = baseShare * (participantMembers.length - 1);
       return cents - distributed;
     }
     return baseShare;
@@ -117,13 +138,13 @@ export async function POST(request: Request) {
     await tx.insert(expenseShares).values(
       shareAmounts.map((share, index) => ({
         expenseId: expense.id,
-        memberId: groupMembers[index].id,
+        memberId: participantMembers[index].id,
         amount: share.toFixed(2)
       }))
     );
 
-    for (let index = 0; index < groupMembers.length; index += 1) {
-      const memberId = groupMembers[index].id;
+    for (let index = 0; index < participantMembers.length; index += 1) {
+      const memberId = participantMembers[index].id;
       if (memberId === paidById) continue;
       await adjustBalance(tx, {
         groupId,
