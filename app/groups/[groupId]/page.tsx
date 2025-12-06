@@ -142,6 +142,9 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
             <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href={`/groups/${group.id}/ledger`}>Balance ledger</Link>
             </Button>
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link href={`/groups/${group.id}/settings`}>Settings</Link>
+            </Button>
             {members.length > 0 ? (
               <LogExpenseDialog members={members} groupId={group.id} />
             ) : (
