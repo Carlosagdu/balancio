@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { ArrowLeft, ArrowUpRight, RefreshCcw, Wallet } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Cog, RefreshCcw, Wallet } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/index";
 import { groups } from "@/db/schema";
@@ -53,9 +53,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
     where: eq(groups.id, groupId),
     with: {
       members: true,
-      expenses: {
-        with: { shares: true }
-      },
+      expenses: { with: { shares: true } },
       balances: true
     }
   });
@@ -67,13 +65,10 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
   const members = group.members;
   const expenses = group.expenses;
   const balances = group.balances;
-
   const memberMap = new Map(members.map((member) => [member.id, member]));
-  const currentMemberId = members[0]?.id ?? null;
 
   const totalGroupSpend = expenses.reduce((sum, expense) => sum + asNumber(expense.amount), 0);
   const averageExpense = expenses.length > 0 ? totalGroupSpend / expenses.length : 0;
-
   const outstandingTotal = balances.reduce((sum, balance) => sum + asNumber(balance.amount), 0);
 
   const summaryCards: SummaryCard[] = [
@@ -84,16 +79,16 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
       icon: Wallet
     },
     {
-      title: "Avg. per expense",
+      title: "Avg. expense",
       value: formatCurrency(averageExpense),
-      description: "Even split across all members",
+      description: "Even split across members",
       icon: ArrowUpRight
     },
     {
-      title: "Outstanding balance",
+      title: "Ledger pending",
       value: formatCurrency(outstandingTotal),
-      description: balances.length > 0 ? `${balances.length} ledger item${balances.length === 1 ? "" : "s"}` : "Nothing pending",
-      accent: outstandingTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100",
+      description: balances.length > 0 ? `${balances.length} active items` : "Nothing pending",
+      accent: outstandingTotal > 0 ? "text-amber-600" : "text-slate-900",
       icon: RefreshCcw
     }
   ];
@@ -131,49 +126,67 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6 lg:py-10">
-      <section className="space-y-4">
+      <section className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Button asChild variant="ghost" className="w-fit gap-2 text-slate-500 dark:text-slate-300">
             <Link href="/">
-              <ArrowLeft className="h-4 w-4" /> Back to dashboard
+              <ArrowLeft className="h-4 w-4" /> Back
             </Link>
           </Button>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" className="w-full sm:w-auto">
-              <Link href={`/groups/${group.id}/ledger`}>Balance ledger</Link>
+            <Button asChild variant="outline" className="rounded-full px-4 text-sm">
+              <Link href={`/groups/${group.id}/ledger`}>Ledger</Link>
             </Button>
-            <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Button asChild variant="outline" className="rounded-full px-4 text-sm">
               <Link href={`/groups/${group.id}/settings`}>Settings</Link>
             </Button>
             {members.length > 0 ? (
               <LogExpenseDialog members={members} groupId={group.id} />
             ) : (
               <Button variant="ghost" disabled>
-                Add members to log expenses
+                Invite members
               </Button>
             )}
           </div>
         </div>
-        <div>
-          <p className="text-sm uppercase tracking-wide text-slate-500 dark:text-slate-400">Group detail</p>
-          <h1 className="text-3xl font-semibold text-slate-900 dark:text-slate-100">{group.name}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Specific overview for {group.name}. Review expenses, balances, and settlement guidance for this exact crew.
-          </p>
+        <div className="rounded-[32px] bg-gradient-to-b from-slate-900 via-slate-900/95 to-slate-900/80 p-6 text-white shadow-xl shadow-slate-900/30">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-white/70">
+            <span>{members.length} member{members.length === 1 ? "" : "s"}</span>
+            <Button asChild variant="default" className="rounded-full bg-white/10 px-4 text-white">
+              <Link href={`/groups/${group.id}/settings`}>
+                <Cog className="mr-2 h-4 w-4" /> Manage group
+              </Link>
+            </Button>
+          </div>
+          <div className="mt-6 space-y-2">
+            <p className="text-sm uppercase tracking-wide text-white/70">Total balance</p>
+            <p className="text-4xl font-bold">{formatCurrency(totalGroupSpend)}</p>
+            <p className="text-xs text-white/70">Active ledger: {formatCurrency(outstandingTotal)}</p>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-4 text-sm text-white/80">
+            <div>
+              <p className="font-semibold">{formatCurrency(totalGroupSpend)}</p>
+              <p>Total spend</p>
+            </div>
+            <div>
+              <p className="font-semibold">{formatCurrency(outstandingTotal)}</p>
+              <p>Ledger pending</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {summaryCards.map((card) => (
-          <Card key={card.title}>
+          <Card key={card.title} className="rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-800">
             <CardHeader className="flex flex-row items-center justify-between gap-4">
               <div>
-                <CardTitle>{card.title}</CardTitle>
+                <CardTitle className="text-base">{card.title}</CardTitle>
                 <CardDescription>{card.description}</CardDescription>
               </div>
               {card.icon && (
-                <div className="rounded-2xl bg-slate-100 p-3 text-slate-500 dark:bg-slate-800/60">
-                  <card.icon className="h-5 w-5" />
+                <div className="rounded-full bg-slate-100 p-3 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  <card.icon className="h-4 w-4" />
                 </div>
               )}
             </CardHeader>
@@ -184,111 +197,50 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
         ))}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <section className="grid gap-6 lg:grid-cols-2">
+        <Card className="rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-800">
+          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Expense log</CardTitle>
-              <CardDescription>Every expense saved for this group along with who paid.</CardDescription>
+              <CardDescription>Recent transactions and who covered them.</CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="divide-y divide-slate-100 px-0 dark:divide-slate-800">
             {expenses.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No expenses have been recorded yet.</p>
+              <p className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No expenses yet.</p>
             ) : (
               expenses.map((expense) => (
-                <div key={expense.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {expense.description ?? "Untitled expense"}
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {formatDate(expense.date)} · Paid by {memberMap.get(expense.paidById)?.name ?? "Unknown"}
-                      </p>
-                    </div>
-                    <span className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                      {formatCurrency(asNumber(expense.amount), expense.currency ?? "USD")}
-                    </span>
+                <div key={expense.id} className="flex items-center justify-between px-4 py-4">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{expense.description ?? "Untitled expense"}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {formatDate(expense.date)} · Paid by {memberMap.get(expense.paidById)?.name ?? "Unknown"}
+                    </p>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {(expense.shares ?? []).map((share) => {
-                      const shareName = memberMap.get(share.memberId)?.name ?? "Member";
-                      return (
-                        <Badge key={`${expense.id}-${share.memberId}`} className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                          {shareName.split(" ")[0]} · {formatCurrency(asNumber(share.amount))}
-                        </Badge>
-                      );
-                    })}
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {formatCurrency(asNumber(expense.amount), expense.currency ?? "USD")}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Even split</p>
                   </div>
                 </div>
               ))
             )}
           </CardContent>
         </Card>
-
-        <Card>
+        <Card className="rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-800">
           <CardHeader>
-            <CardTitle>Balance ledger</CardTitle>
-            <CardDescription>Track who owes whom right now.</CardDescription>
+            <CardTitle>Group balances</CardTitle>
+            <CardDescription>Everyone&apos;s current position.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {balances.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">All balances are settled.</p>
-            ) : (
-              balances.map((balance) => {
-                const creditor = memberMap.get(balance.creditorId);
-                const debtor = memberMap.get(balance.debtorId);
-                const isYouCreditor = currentMemberId ? balance.creditorId === currentMemberId : false;
-                const isYouDebtor = currentMemberId ? balance.debtorId === currentMemberId : false;
-                return (
-                  <div
-                    key={balance.id}
-                    className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                          {debtor?.name ?? "Someone"} owes {creditor?.name ?? "Someone"}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">Even split balance inside {group.name}</p>
-                      </div>
-                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {formatCurrency(asNumber(balance.amount))}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      {isYouCreditor && (
-                        <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">You receive</Badge>
-                      )}
-                      {isYouDebtor && (
-                        <Badge className="bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200">You owe</Badge>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Group balances</CardTitle>
-              <CardDescription>Everyone&apos;s current position inside this group.</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {memberBalanceSummaries.length === 0 ? (
               <p className="text-sm text-slate-500 dark:text-slate-400">Add members to see balances.</p>
             ) : (
               memberBalanceSummaries.map(({ member, balance }) => (
                 <div
                   key={member.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                  className="flex items-center justify-between rounded-2xl border border-slate-100 px-4 py-3 dark:border-slate-800"
                 >
                   <div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{member.name}</p>
@@ -297,11 +249,7 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
                   <div className="text-right">
                     <p
                       className={`text-sm font-semibold ${
-                        balance > 0
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : balance < 0
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-slate-600 dark:text-slate-300"
+                        balance > 0 ? "text-emerald-600 dark:text-emerald-400" : balance < 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100"
                       }`}
                     >
                       {balance === 0 ? "Settled" : formatCurrency(Math.abs(balance))}
@@ -315,23 +263,20 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
             )}
           </CardContent>
         </Card>
+      </section>
 
-        <Card>
-          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Member settlement status</CardTitle>
-              <CardDescription>Compare paid amount versus even share.</CardDescription>
-            </div>
+      <section className="grid gap-6 lg:grid-cols-2">
+        <Card className="rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-800">
+          <CardHeader>
+            <CardTitle>Member settlement</CardTitle>
+            <CardDescription>Paid vs. share comparison.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-4">
             {memberSummaries.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">Add members to see settlement stats.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No members available.</p>
             ) : (
               memberSummaries.map(({ member, paid, share, owes, owed, settledRatio, net }) => (
-                <div
-                  key={member.id}
-                  className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                >
+                <div key={member.id} className="rounded-2xl border border-slate-100 p-4 dark:border-slate-800">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{member.name}</p>
@@ -361,58 +306,37 @@ export default async function GroupDetailPage({ params }: GroupDetailPageProps) 
             )}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Analytics</CardTitle>
-              <CardDescription>Quick insights for this group.</CardDescription>
-            </div>
+        <Card className="rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-100 dark:bg-slate-900 dark:ring-slate-800">
+          <CardHeader>
+            <CardTitle>Ledger highlights</CardTitle>
+            <CardDescription>Top outstanding balances.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Most generous</p>
-              {memberSummaries.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">No contributors yet.</p>
-              ) : (
-                memberSummaries
-                  .slice()
-                  .sort((a, b) => b.paid - a.paid)
-                  .slice(0, 1)
-                  .map(({ member, paid }) => (
-                    <div key={member.id} className="mt-2">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{member.name}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">Logged {formatCurrency(paid)}</p>
-                    </div>
-                  ))
-              )}
-            </div>
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Largest balance</p>
-              {balances.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">No outstanding balances.</p>
-              ) : (
-                balances
-                  .slice()
-                  .sort((a, b) => asNumber(b.amount) - asNumber(a.amount))
-                  .slice(0, 1)
-                  .map((balance) => {
-                    const creditor = memberMap.get(balance.creditorId)?.name ?? "Friend";
-                    const debtor = memberMap.get(balance.debtorId)?.name ?? "Friend";
-                    return (
-                      <div key={balance.id} className="mt-2">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                          {debtor} ➜ {creditor}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{formatCurrency(asNumber(balance.amount))}</p>
+            {balances.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">All settled.</p>
+            ) : (
+              balances
+                .slice()
+                .sort((a, b) => asNumber(b.amount) - asNumber(a.amount))
+                .slice(0, 5)
+                .map((balance) => {
+                  const creditor = memberMap.get(balance.creditorId);
+                  const debtor = memberMap.get(balance.debtorId);
+                  return (
+                    <div key={balance.id} className="rounded-2xl border border-slate-100 p-4 dark:border-slate-800">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {debtor?.name ?? "Someone"} ➜ {creditor?.name ?? "Someone"}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">Even split balance</p>
+                        </div>
+                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(asNumber(balance.amount))}</span>
                       </div>
-                    );
-                  })
-              )}
-            </div>
-            <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-              Keep logging expenses to unlock more trends like category split and timeline.
-            </div>
+                    </div>
+                  );
+                })
+            )}
           </CardContent>
         </Card>
       </section>
