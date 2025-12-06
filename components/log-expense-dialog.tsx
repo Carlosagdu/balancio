@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ type LogExpenseDialogProps = {
 };
 
 export function LogExpenseDialog({ members, groupId }: LogExpenseDialogProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -61,6 +63,8 @@ export function LogExpenseDialog({ members, groupId }: LogExpenseDialogProps) {
       setSelectedParticipants(members.map((member) => member.id));
       setStatusMessage("Expense saved successfully.");
       setStatusVariant("success");
+      setOpen(false);
+      router.refresh();
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "Failed to save expense");
       setStatusVariant("error");

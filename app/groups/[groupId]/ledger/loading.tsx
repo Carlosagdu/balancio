@@ -1,0 +1,27 @@
+export default function GroupLedgerLoading() {
+  return (
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 sm:px-6 lg:py-10">
+      <div className="space-y-3">
+        <div className="h-4 w-32 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="h-10 w-2/3 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="h-4 w-1/2 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+      </div>
+      <section className="grid gap-4 md:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="h-4 w-1/3 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+            <div className="mt-4 h-8 w-1/2 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+          </div>
+        ))}
+      </section>
+      <section className="grid gap-6 lg:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-72 rounded-2xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 animate-pulse"
+          />
+        ))}
+      </section>
+    </main>
+  );
+}
